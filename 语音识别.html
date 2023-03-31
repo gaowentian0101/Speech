@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Speech Recognition Example</title>
+</head>
+
+<body>
+  <div class=" gradient">
+    <div class="content">
+      <textarea x-webkit-speech id="speech-input" class="input" placeholder="点击开始识别按钮就可以将语音转化为文字输入在文本框里！"></textarea>
+    </div>
+    <div class="btn">
+      <button id="start-button">开始识别</button>
+      <button id="stop-button">停止识别</button>
+      <button id="lan-button">合成语音</button>
+    </div>
+  </div>
+
+
+</body>
+
+<script>
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const recognition = new SpeechRecognition();//创建语音识别器对象
+  const synth = window.speechSynthesis//创建语音合成器对象
+  recognition.continuous = true;//设置是否一直识别false为听到声音停止识别
+  recognition.lang = 'cmn-Hans-CN'; //普通话 (中国大陆)
+  synth.lang = 'cmn-Hans-CN';
+  const speechInputEl = document.getElementById('speech-input');
+  const startButtonEl = document.getElementById('start-button');
+  const stopButtonEl = document.getElementById('stop-button');
+  const lanButtonEl = document.getElementById('lan-button');
+
+  // 点击开始识别
+  startButtonEl.addEventListener('click', () => {
+    recognition.start();
+  });
+  // 停止识别
+  stopButtonEl.addEventListener('click', () => {
+    recognition.stop();
+    alert('已停止识别')
+  });
+  // 抛出异常
+  recognition.onerror = function (event) {
+    console.log(event);
+  }
+  // 出现停顿会自动停止识别，当停顿结束继续识别，保持识别连贯性
+  recognition.onend = function (event) {
+    recognition.start();
+  };
+  let finalTranscript = "";
+  // 返回的结果处理
+  recognition.onresult = function (event) {
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      const transcript = event.results[i][0].transcript;
+      if (event.results[i].isFinal) {
+        finalTranscript += transcript + " ";
+      }
+    }
+    speechInputEl.value = finalTranscript;
+  }
+  // 语音合成
+  lanButtonEl.addEventListener('click', () => {
+    recognition.stop();
+    if (finalTranscript !== '') {
+      const utterance = new SpeechSynthesisUtterance(finalTranscript)
+      synth.speak(utterance)
+    } else {
+      alert('暂无识别内容')
+    }
+  });
+
+</script>
+<style>
+  .gradient {
+    /* 设置容器尺寸 - 原理1 */
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+
+    /* 背景渐变色 - 原理2 */
+    background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+    /* 背景尺寸 - 原理3 */
+    background-size: 600% 600%;
+    /* 循环动画 - 原理4 */
+    animation: gradientBG 5s ease infinite;
+  }
+
+  /* 动画，控制背景 background-position */
+  @keyframes gradientBG {
+    0% {
+      background-position: 0% 50%;
+    }
+
+    50% {
+      background-position: 100% 50%;
+    }
+
+    100% {
+      background-position: 0% 50%;
+    }
+  }
+
+
+  .gradient .content {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 20%;
+  }
+
+  .content .input {
+    width: 600px;
+    height: 200px;
+    white-space: normal;
+    word-wrap: break-word;
+  }
+
+  .btn {
+    text-align: center;
+    padding: 20px;
+  }
+</style>
+
+</html>
